@@ -8,8 +8,8 @@ import cloudinary from '../lib/cloudinary.js';
   const { fullName, email, password } = req.body;
 
   try {
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    if (!fullName || !email || !password || password.length < 6) {
+      return res.status(400).json({ message: "All field required" });
     }
 
     const existingUser = await User.findOne({ email });
