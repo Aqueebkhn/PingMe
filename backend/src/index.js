@@ -11,7 +11,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 5001;
 
-app.use(express.json({ limit: "10mb" })); // Increase limit for profile base64 uploads
+app.use(express.json({ limit: "16mb" }));
 app.use(cookieParser());
 app.use(cors({
     origin: "http://localhost:5173",

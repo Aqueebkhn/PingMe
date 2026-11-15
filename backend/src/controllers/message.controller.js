@@ -9,7 +9,12 @@ export const getUsersForSidebar = async (req, res) => {
     const loggedInUserId = req.user._id;
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
 
-    res.status(200).json(filteredUsers);
+    res.status(200).json(filteredUsers.map((user) => ({
+      _id: user._id,
+      fullName: user.fullname,
+      email: user.email,
+      profilePic: user.profilepic || null,
+    })));
   } catch (error) {
     console.error("Error in getUsersForSidebar: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -37,9 +42,18 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, attachment } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
+
+    if (!text?.trim() && !image && !attachment) {
+      return res.status(400).json({ message: "A message, image, or file is required" });
+    }
+
+    const maxFileSize = 5 * 1024 * 1024;
+    if (image && (typeof image !== "string" || !image.startsWith("data:image/") || image.length > maxFileSize * 4 / 3 + 100)) {
+      return res.status(400).json({ message: "Invalid image attachment (maximum size is 5 MB)" });
+    }
 
     let imageUrl;
     if (image) {
@@ -48,11 +62,39 @@ export const sendMessage = async (req, res) => {
       imageUrl = uploadResponse.secure_url;
     }
 
+    let uploadedAttachment;
+    if (attachment) {
+      if (
+        typeof attachment.data !== "string" ||
+        !attachment.data.startsWith("data:") ||
+        typeof attachment.name !== "string" ||
+        !attachment.name.trim() ||
+        typeof attachment.mimeType !== "string" ||
+        !Number.isFinite(attachment.size) ||
+        attachment.size <= 0 ||
+        attachment.size > maxFileSize
+      ) {
+        return res.status(400).json({ message: "Invalid file attachment (maximum size is 5 MB)" });
+      }
+
+      const uploadResponse = await cloudinary.uploader.upload(attachment.data, {
+        resource_type: "auto",
+        folder: "pingme/attachments",
+      });
+      uploadedAttachment = {
+        url: uploadResponse.secure_url,
+        name: attachment.name.trim(),
+        mimeType: attachment.mimeType,
+        size: attachment.size,
+      };
+    }
+
     const newMessage = new Message({
       senderId,
       receiverId,
-      text,
+      text: text?.trim(),
       image: imageUrl,
+      attachment: uploadedAttachment,
     });
 
     await newMessage.save();

@@ -3,6 +3,14 @@ import { generateToken } from '../lib/utils.js';
 import User from '../models/user.model.js';
 import cloudinary from '../lib/cloudinary.js';
 
+const toPublicUser = (user) => ({
+  _id: user._id,
+  fullName: user.fullname,
+  email: user.email,
+  profilePic: user.profilepic || null,
+  createdAt: user.createdAt,
+});
+
 // Signup Controller
  const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -21,7 +29,7 @@ import cloudinary from '../lib/cloudinary.js';
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
-      fullName,
+      fullname: fullName,
       email,
       password: hashedPassword,
     });
@@ -30,11 +38,7 @@ import cloudinary from '../lib/cloudinary.js';
 
     generateToken(newUser._id, res);
 
-    res.status(201).json({
-      _id: newUser._id,
-      fullName: newUser.fullName,
-      email: newUser.email,
-    });
+    res.status(201).json(toPublicUser(newUser));
 
   } catch (error) {
     console.error("Signup Error:", error.message);
@@ -59,12 +63,7 @@ import cloudinary from '../lib/cloudinary.js';
 
     generateToken(user._id, res);
 
-    res.status(200).json({
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic || null,
-    });
+    res.status(200).json(toPublicUser(user));
 
   } catch (error) {
     console.error("Login Error:", error.message);
@@ -95,11 +94,11 @@ const updateProfile = async (req, res) => {
           const uploadResponse = await cloudinary.uploader.upload(profilePic);
           const updatedUser = await User.findByIdAndUpdate(
               userId,
-              { profilePic: uploadResponse.secure_url },
+              { profilepic: uploadResponse.secure_url },
               { new: true }
           ).select("-password");
 
-          res.status(200).json(updatedUser);
+          res.status(200).json(toPublicUser(updatedUser));
 
    }catch (error) {
        console.error("updatedProfile Error:", error.message, "inavlid data" );
@@ -109,7 +108,7 @@ const updateProfile = async (req, res) => {
 
 const checkAuth = (req, res) => {
   try {
-    res.status(200).json(req.user);
+    res.status(200).json(toPublicUser(req.user));
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
