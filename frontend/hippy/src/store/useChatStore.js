@@ -39,8 +39,10 @@ export const useChatStore = create((set, get) => ({
     try {
       const res = await instance.post(`/message/send/${selectedUser._id}`, messageData);
       set({ messages: [...messages, res.data] });
+      return true;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to send message");
+      return false;
     }
   },
 

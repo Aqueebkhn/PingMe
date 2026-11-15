@@ -33,7 +33,7 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 pt-16">
+    <div className="auth-shell grid min-h-screen lg:grid-cols-2 pt-16">
       {/* Left side: Form */}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
         <div className="w-full max-w-md space-y-8">
@@ -139,8 +139,8 @@ const SignUpPage = () => {
 
       {/* Right side: Visual Promo panel */}
       <div className="hidden lg:flex items-center justify-center bg-base-200 p-12">
-        <div className="max-w-md text-center space-y-6">
-          <div className="grid grid-cols-3 gap-3">
+        <div className="auth-art text-center">
+          <div className="auth-art-grid grid grid-cols-3 gap-3">
             {[...Array(9)].map((_, i) => (
               <div
                 key={i}
